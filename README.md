@@ -61,13 +61,14 @@ anything beyond `collections/dataclasses/enum/types/typing` or an outer layer.
 ```python
 reg = HandlerRegistry()
 reg.on("reserve-stock", reserve, compensate=release)
-reg.on("charge-card", charge)            # PIVOT: no compensation
-reg.on("ship", ship)                     # RETRIABLE
-o = SagaOrchestrator([ORDER], reg, JsonFileSagaStore("sagas/"),
-                     SystemClock(), AsyncioSleeper(), SeededRandom(1))
+reg.on("charge-card", charge)  # PIVOT: no compensation
+reg.on("ship", ship)  # RETRIABLE
+o = SagaOrchestrator(
+    [ORDER], reg, JsonFileSagaStore("sagas/"), SystemClock(), AsyncioSleeper(), SeededRandom(1)
+)
 o.start("place-order", "order-42", {"qty": 2, "card": "tok_..."})
-saga = await o.run("order-42")           # COMPLETED | COMPENSATED | FAILED
-await o.resume_incomplete()              # after a crash
+saga = await o.run("order-42")  # COMPLETED | COMPENSATED | FAILED
+await o.resume_incomplete()  # after a crash
 ```
 
 Full runnable example: `python examples/order_saga.py`.
