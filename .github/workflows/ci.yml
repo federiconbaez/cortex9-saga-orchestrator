@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: install
+        run: python -m pip install -e '.[dev]'
+      - name: architecture (pure domain)
+        run: python scripts/check_architecture.py
+      - name: ruff
+        run: ruff check . && ruff format --check .
+      - name: mypy --strict
+        run: mypy && MYPYPATH=src:tests mypy --strict --python-version 3.11 tests/*.py
+      - name: pytest
+        run: pytest
+      - name: example
+        run: python examples/order_saga.py
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source /repo --no-banner --redact
